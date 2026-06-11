@@ -10,13 +10,8 @@ public:
 
 class GMoteBrowserImpl : public GModWebBrowserTarget {
 public:
-    void InitBrowser() override {
-        // Initialize cloud or local rendering context here
-    }
-    
-    void RenderFrame() override {
-        // Buffer frame for Android Surface rendering
-    }
+    void InitBrowser() override {}
+    void RenderFrame() override {}
 };
 
 extern "C" {
@@ -25,7 +20,6 @@ extern "C" {
             if (pReturnCode) *pReturnCode = 0;
             return new GMoteBrowserImpl();
         }
-        
         if (pReturnCode) *pReturnCode = 1;
         return nullptr;
     }

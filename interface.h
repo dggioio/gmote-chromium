@@ -1,3 +1,4 @@
+cat << 'EOF' > interface.h
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
@@ -7,3 +8,4 @@ public:
 };
 
 #endif // INTERFACE_H
+EOF
