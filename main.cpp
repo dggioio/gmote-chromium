@@ -1,24 +1,38 @@
 #include "interface.h"
 #include <cstring>
 
-class IHtmlChromium : public IBaseInterface {
+class IGModWebBrowser001 : public IBaseInterface {
 public:
     virtual void Init() = 0;
     virtual void Shutdown() = 0;
+    virtual void SetSize(int w, int h) = 0;
+    virtual void LoadURL(const char* url) = 0;
+    virtual void OnMouseMove(int x, int y) = 0;
+    virtual void OnMouseClick(int button, bool down) = 0;
     virtual void Update() = 0;
 };
 
-class CHtmlChromium : public IHtmlChromium {
+class CGModWebBrowser : public IGModWebBrowser001 {
+private:
+    int width;
+    int height;
+    int mouseX;
+    int mouseY;
 public:
+    CGModWebBrowser() : width(1024), height(768), mouseX(0), mouseY(0) {}
     void Init() override {}
     void Shutdown() override {}
+    void SetSize(int w, int h) override { width = w; height = h; }
+    void LoadURL(const char* url) override {}
+    void OnMouseMove(int x, int y) override { mouseX = x; mouseY = y; }
+    void OnMouseClick(int button, bool down) override {}
     void Update() override {}
 };
 
 extern "C" __attribute__((visibility("default"))) void* CreateInterface(const char* pName, int* pReturnCode) {
     if (std::strcmp(pName, "IGModWebBrowser001") == 0) {
         if (pReturnCode) *pReturnCode = 0;
-        return new CHtmlChromium();
+        return new CGModWebBrowser();
     }
     if (pReturnCode) *pReturnCode = 1;
     return nullptr;
