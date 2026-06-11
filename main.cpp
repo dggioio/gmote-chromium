@@ -1,9 +1,9 @@
 #include "interface.h"
 #include <cstring>
 
-class CGModWebBrowser {
+class IGModWebBrowser001 {
 public:
-    virtual ~CGModWebBrowser() {}
+    virtual ~IGModWebBrowser001() {}
     virtual void Init() = 0;
     virtual void Shutdown() = 0;
     virtual void SetSize(int w, int h) = 0;
@@ -13,7 +13,7 @@ public:
     virtual void Update() = 0;
 };
 
-class BrowserImpl : public CGModWebBrowser {
+class CGModWebBrowser : public IGModWebBrowser001 {
 public:
     void Init() override {}
     void Shutdown() override {}
@@ -27,7 +27,7 @@ public:
 extern "C" __attribute__((visibility("default"))) void* CreateInterface(const char* pName, int* pReturnCode) {
     if (std::strcmp(pName, "IGModWebBrowser001") == 0) {
         if (pReturnCode) *pReturnCode = 0;
-        return new BrowserImpl();
+        return new CGModWebBrowser();
     }
     if (pReturnCode) *pReturnCode = 1;
     return nullptr;
