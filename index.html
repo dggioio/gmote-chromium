@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GMod Loading Screen</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1e1e24;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        h1 { font-size: 48px; margin-bottom: 10px; text-transform: uppercase; }
+        .status { font-size: 20px; color: #aaa; margin-bottom: 30px; }
+        .progress-bar {
+            width: 50%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #ff4500;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 id="servername">WELCOME</h1>
+    
+    <div class="status" id="status">Connecting to server...</div>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <script>
+        function GameDetails( servername, serverurl, mapname, maxplayers, steamid, gamemode, volume, language ) {
+            document.getElementById('servername').innerHTML = servername;
+        }
+
+        function DownloadingFile( fileName ) {
+            document.getElementById('status').innerHTML = "Downloading file: " + fileName;
+        }
+
+        function SetStatusChanged( status ) {
+            document.getElementById('status').innerHTML = status;
+            if(status === "Sending client info...") {
+                document.getElementById('progress').style.width = "100%";
+            }
+        }
+    </script>
+</body>
+</html>
