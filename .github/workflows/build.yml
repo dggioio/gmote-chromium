@@ -7,6 +7,7 @@
             -DANDROID_PLATFORM=android-21 \
             -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
+          
           # ИЩЕМ И КОПИРУЕМ БЕЗ ПРЕФИКСА 'lib'
           # Если файл называется html_chromium.so, мы его скопируем
           if [ -f "html_chromium.so" ]; then
@@ -16,4 +17,3 @@
           else
             echo "Файл не найден!" && exit 1
           fi
-
