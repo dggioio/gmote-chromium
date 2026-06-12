@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
-project(GMoteChromium)
+project(html_chromium)
 
 add_library(html_chromium SHARED main.cpp)
 
-target_compile_options(libServerBrowser PRIVATE -Wall -fvisibility=hidden)
-set_target_properties(html_chromium PROPERTIES PREFIX "")
+target_link_libraries(html_chromium PRIVATE dl)
+
+target_compile_options(html_chromium PRIVATE 
+    -fPIC 
+    -fvisibility=hidden 
+    -ffast-math 
+    -O2 
+    -fno-strict-aliasing
+)
