@@ -95,11 +95,15 @@ EXPORT_FUNCTION void* CreateInterface(const char* pName, int* pReturnCode) {
     }
 
     if (pName && std::strstr(pName, "IGModWebBrowser")) {
-        if (pReturnCode) *pReturnCode = 0;
+        if (pReturnCode) {
+            *pReturnCode = 0;
+        }
         static CGModWebBrowser s_Browser;
-        return (void*)&s_Browser;
+        return static_cast<void*>(&s_Browser);
     }
     
-    if (pReturnCode) *pReturnCode = 1;
+    if (pReturnCode) {
+        *pReturnCode = 1;
+    }
     return nullptr;
 }
