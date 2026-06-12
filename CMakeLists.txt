@@ -1,18 +1,32 @@
 cmake_minimum_required(VERSION 3.10)
-project(html_chromium)
+project(html_chromium C CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+# Устанавливаем стандарт C++
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_library(html_chromium SHARED main.cpp)
+# Убираем все лишние префиксы, чтобы библиотека называлась просто html_chromium.so
+# По умолчанию CMake добавляет 'lib' в начале (libhtml_chromium.so)
+# Мы переименуем его в build.yml, но здесь отключаем префикс для чистоты
+set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-target_link_libraries(html_chromium PRIVATE dl)
+# Исходный файл
+set(SOURCES main.cpp)
 
+# Создаем библиотеку
+add_library(html_chromium SHARED ${SOURCES})
+
+# Оптимизация и скрытие символов (оставляем только то, что нужно движку)
 target_compile_options(html_chromium PRIVATE 
-    -fPIC 
     -fvisibility=hidden 
-    -ffast-math 
-    -O3 
-    -fno-strict-aliasing
-    -Wall
+    -fPIC
+)
+
+# Подключаем необходимые библиотеки Android
+target_link_libraries(html_chromium PRIVATE dl log)
+
+# Настройка выходного имени (дополнительная страховка)
+set_target_properties(html_chromium PROPERTIES 
+    OUTPUT_NAME "html_chromium"
+    PREFIX ""
 )
