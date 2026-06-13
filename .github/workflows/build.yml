@@ -1,3 +1,19 @@
+name: Build Chromium 32-bit
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+
       - name: Compile 32-bit Library
         run: |
           mkdir build_32 && cd build_32
@@ -8,12 +24,16 @@
             -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
           
-          # ИЩЕМ И КОПИРУЕМ БЕЗ ПРЕФИКСА 'lib'
-          # Если файл называется html_chromium.so, мы его скопируем
           if [ -f "html_chromium.so" ]; then
-            cp html_chromium.so ../html_chromium_32.so
+            cp html_chromium.so ../html_chromium.so
           elif [ -f "libhtml_chromium.so" ]; then
-            cp libhtml_chromium.so ../html_chromium_32.so
+            cp libhtml_chromium.so ../html_chromium.so
           else
             echo "Файл не найден!" && exit 1
           fi
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: html_chromium
+          path: html_chromium.so
