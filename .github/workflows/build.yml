@@ -1,4 +1,4 @@
-name: Build 32-bit (Hard Force NDK r25c)
+name: Force Build 32-bit r25c
 
 on: [push, pull_request]
 
@@ -6,21 +6,22 @@ jobs:
   build_32:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Force NDK r25c
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r25c
-          # Добавляем принудительную установку, если стандартная не срабатывает
-          link-to-sdk: true
-
-      - name: Compile 32-bit
+      - name: Install NDK r25c Manually
         run: |
-          # Проверяем версию NDK перед сборкой
-          echo "NDK Path: $ANDROID_NDK_HOME"
-          ls -F $ANDROID_NDK_HOME/source.properties
+          # Скачиваем официальный NDK r25c
+          wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+          unzip -q android-ndk-r25c-linux.zip -d $HOME/ndk_r25c
+          
+          # Жестко прописываем путь
+          echo "ANDROID_NDK_HOME=$HOME/ndk_r25c/android-ndk-r25c" >> $GITHUB_ENV
+          echo "NDK_PATH=$HOME/ndk_r25c/android-ndk-r25c" >> $GITHUB_ENV
+
+      - name: Build with Forced NDK
+        run: |
+          # Используем именно тот путь, который мы только что прописали
+          export ANDROID_NDK_HOME=$HOME/ndk_r25c/android-ndk-r25c
           
           mkdir build_32 && cd build_32
           cmake .. \
@@ -29,7 +30,7 @@ jobs:
             -DANDROID_PLATFORM=android-24 \
             -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
-
+          
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
