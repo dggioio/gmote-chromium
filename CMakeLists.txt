@@ -1,29 +1,41 @@
-cmake_minimum_required(VERSION 3.10)
-project(html_chromium C CXX)
+name: Build Chromium (Hard Override r25c)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+on: [push, pull_request]
 
-# Убираем префикс 'lib', чтобы файл сразу назывался html_chromium.so
-set(CMAKE_SHARED_LIBRARY_PREFIX "")
+jobs:
+  build_32:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-# Исходный файл
-set(SOURCES main.cpp)
+      - name: Setup NDK r25c
+        run: |
+          # Скачиваем и распаковываем
+          wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+          unzip -q android-ndk-r25c-linux.zip -d $HOME/ndk25
+          
+          # Устанавливаем путь
+          echo "MY_NDK_PATH=$HOME/ndk25/android-ndk-r25c" >> $GITHUB_ENV
 
-# Создаем библиотеку
-add_library(html_chromium SHARED ${SOURCES})
-
-# Оптимизация: скрываем внутренние символы, оставляем только CreateInterface
-target_compile_options(html_chromium PRIVATE 
-    -fvisibility=hidden 
-    -fPIC
-)
-
-# Линковка системных библиотек
-target_link_libraries(html_chromium PRIVATE dl log)
-
-# Настройка итогового имени
-set_target_properties(html_chromium PROPERTIES 
-    OUTPUT_NAME "html_chromium"
-    PREFIX ""
-)
+      - name: Compile 32-bit
+        run: |
+          # ВАЖНО: Переопределяем системную переменную, чтобы cmake брал наш NDK
+          export ANDROID_NDK_HOME=$MY_NDK_PATH
+          export CMAKE_PREFIX_PATH=$MY_NDK_PATH
+          
+          mkdir build_32 && cd build_32
+          
+          # Запускаем cmake, явно указывая путь к toolchain
+          cmake .. \
+            -DCMAKE_TOOLCHAIN_FILE=$MY_NDK_PATH/build/cmake/android.toolchain.cmake \
+            -DANDROID_NDK=$MY_NDK_PATH \
+            -DANDROID_ABI=armeabi-v7a \
+            -DANDROID_PLATFORM=android-24 \
+            -DCMAKE_BUILD_TYPE=Release
+            
+          make -j$(nproc)
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lib_armeabi-v7a
+          path: build_32/html_chromium.so
