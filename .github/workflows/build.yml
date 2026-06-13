@@ -1,40 +1,29 @@
-name: Force Override NDK
-
+name: Build Chromium
 on: [push, pull_request]
 
 jobs:
-  build_32:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Hard Override NDK
+      - name: Setup NDK r25c
         run: |
-          # 1. Скачиваем r25c
           wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
           unzip -q android-ndk-r25c-linux.zip
-          
-          # 2. АГРЕССИВНАЯ ПОДМЕНА: находим, где лежит r27, и удаляем его, копируя туда наш r25c
-          # Находим путь к системному NDK
-          SYSTEM_NDK=$(ls -d /usr/local/lib/android/sdk/ndk/* | head -n 1)
-          sudo rm -rf $SYSTEM_NDK
-          sudo mv android-ndk-r25c $SYSTEM_NDK
-          
-          # 3. Теперь любые ссылки на $ANDROID_NDK_HOME будут вести на наш r25c
-          echo "ANDROID_NDK_HOME=$SYSTEM_NDK" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-ndk-r25c" >> $GITHUB_ENV
 
       - name: Build
         run: |
-          mkdir build_32 && cd build_32
-          # Теперь cmake увидит r25c, так как он лежит по системному пути
+          mkdir build && cd build
           cmake .. \
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=armeabi-v7a \
             -DANDROID_PLATFORM=android-24 \
             -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
-          
+
       - uses: actions/upload-artifact@v4
         with:
-          name: lib_armeabi-v7a
-          path: build_32/html_chromium.so
+          name: lib_chromium
+          path: build/html_chromium.so
