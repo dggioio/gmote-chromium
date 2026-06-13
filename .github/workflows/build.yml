@@ -1,4 +1,4 @@
-name: Build Chromium 32-bit (r25c)
+name: Build Chromium 32-bit (NDK r25c)
 
 on: [push, pull_request]
 
@@ -9,7 +9,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup NDK r25c (32-bit)
+      - name: Setup NDK r25c
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r25c
@@ -23,7 +23,6 @@ jobs:
             -DANDROID_PLATFORM=android-24 \
             -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
-          # Файл остается с оригинальным именем html_chromium.so
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
