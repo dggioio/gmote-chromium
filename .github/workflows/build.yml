@@ -1,4 +1,4 @@
-name: Force Build 32-bit r25c
+name: Build 32-bit (Hard Force)
 
 on: [push, pull_request]
 
@@ -8,20 +8,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install NDK r25c Manually
+      - name: Force NDK r25c
         run: |
-          # Скачиваем официальный NDK r25c
-          wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
-          unzip -q android-ndk-r25c-linux.zip -d $HOME/ndk_r25c
+          # 1. Удаляем все старые NDK из образа, чтобы они не мешали
+          sudo rm -rf /usr/local/lib/android/sdk/ndk/*
           
-          # Жестко прописываем путь
-          echo "ANDROID_NDK_HOME=$HOME/ndk_r25c/android-ndk-r25c" >> $GITHUB_ENV
-          echo "NDK_PATH=$HOME/ndk_r25c/android-ndk-r25c" >> $GITHUB_ENV
+          # 2. Качаем r25c
+          wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+          unzip -q android-ndk-r25c-linux.zip
+          
+          # 3. Переопределяем путь для текущей сессии
+          echo "ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-ndk-r25c" >> $GITHUB_ENV
 
-      - name: Build with Forced NDK
+      - name: Compile 32-bit
         run: |
-          # Используем именно тот путь, который мы только что прописали
-          export ANDROID_NDK_HOME=$HOME/ndk_r25c/android-ndk-r25c
+          # Используем путь, который мы только что экспортировали
+          export ANDROID_NDK_HOME=$GITHUB_WORKSPACE/android-ndk-r25c
           
           mkdir build_32 && cd build_32
           cmake .. \
@@ -31,8 +33,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc)
           
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: lib_armeabi-v7a
           path: build_32/html_chromium.so
