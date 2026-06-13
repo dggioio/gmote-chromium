@@ -1,4 +1,4 @@
-name: Build Chromium 32-bit (NDK r25c)
+name: Build 32-bit (Hard Force NDK r25c)
 
 on: [push, pull_request]
 
@@ -9,13 +9,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup NDK r25c
+      - name: Force NDK r25c
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r25c
+          # Добавляем принудительную установку, если стандартная не срабатывает
+          link-to-sdk: true
 
       - name: Compile 32-bit
         run: |
+          # Проверяем версию NDK перед сборкой
+          echo "NDK Path: $ANDROID_NDK_HOME"
+          ls -F $ANDROID_NDK_HOME/source.properties
+          
           mkdir build_32 && cd build_32
           cmake .. \
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
