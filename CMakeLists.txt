@@ -3,8 +3,6 @@ project(gmote-chromium CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Создаем shared-библиотеку
 add_library(html_chromium SHARED main.cpp)
 
-# Линкуем системный лог Android напрямую через встроенный флаг
 target_link_libraries(html_chromium PRIVATE log)

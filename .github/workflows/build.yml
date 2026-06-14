@@ -15,7 +15,7 @@ jobs:
 
       - name: Build
         run: |
-          mkdir build && cd build
+          mkdir -p build && cd build
           cmake .. \
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=armeabi-v7a \
@@ -27,5 +27,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: lib_chromium
+          name: lib_chromium_32
           path: build/**/libhtml_chromium.so
