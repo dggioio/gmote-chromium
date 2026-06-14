@@ -1,13 +1,13 @@
-name: Build Source Engine (32 & 64 bit)
+name: Build Source Engine Chromium
 
 on:
   push:
     branches: [ "main", "master" ]
-  workflow_dispatch: # Добавляет кнопку "Run workflow" на сайте GitHub
+  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest # Перешли на новейший сервер, чтобы не было очередей
 
     steps:
       - name: Checkout Code
@@ -19,7 +19,7 @@ jobs:
           unzip -q android-ndk-r21e-linux-x86_64.zip -d /opt/
           echo "NDK_ROOT=/opt/android-ndk-r21e" >> $GITHUB_ENV
 
-      - name: Fix Hardcoded Paths (Symlink Hack)
+      - name: Fix NDK Paths (Symlink Hack)
         run: |
           # Создаем структуру, которую жестко ищет старый Source Engine
           sudo mkdir -p /home/nillerusr
