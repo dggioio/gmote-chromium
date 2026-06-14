@@ -16,25 +16,27 @@ jobs:
           ./android-ndk-r10e-linux-x86_64.bin -y > /dev/null
           echo "NDK_ROOT=$PWD/android-ndk-r10e" >> $GITHUB_ENV
 
-      - name: Build Architectures
+      - name: Build Libraries
         run: |
-          # Исправление путей
           sed -i "s|/data/data/com.termux/files/usr/opt/android-ndk|$PWD/android-ndk-r10e|g" build.sh
           sed -i 's|/data/data/com.termux/files/usr/bin/make|make|g' build.sh
           sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
           chmod +x build.sh
           
-          # Сборка 32-бит
-          echo "Building 32-bit..."
-          APP_ABI=armeabi-v7a ./build.sh
+          # Собираем и сразу перемещаем результат в понятные папки
+          mkdir -p output/armeabi-v7a output/arm64-v8a
           
-          # Сборка 64-бит
-          echo "Building 64-bit..."
+          APP_ABI=armeabi-v7a ./build.sh
+          find . -name "html_chromium.so" -exec cp {} output/armeabi-v7a/ \;
+          
+          # Очистка перед следующей сборкой (если нужно)
+          make clean || true
+          
           APP_ABI=arm64-v8a ./build.sh
+          find . -name "html_chromium.so" -exec cp {} output/arm64-v8a/ \;
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: lib-files-full
-          path: |
-            **/*.so
+          name: html_chromium_libs
+          path: output/
