@@ -1,46 +1,32 @@
-name: Build Source Engine Chromium
-
+name: Build
 on:
   push:
-    branches: [ "main", "master" ]
-  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой
-
+    branches: [ "main" ]
+  workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-latest # Используем новейший свободный сервер
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4 # Исправлено на v4
-
-      - name: Download and Setup NDK r21e
-        run: |
+      - uses: actions/checkout@v4
+      - run: |
           wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
           unzip -q android-ndk-r21e-linux-x86_64.zip -d /opt/
           echo "NDK_ROOT=/opt/android-ndk-r21e" >> $GITHUB_ENV
-
-      - name: Fix NDK Paths (Symlink Hack)
-        run: |
-          # Создаем структуру, которую жестко ищет старый Source Engine
+      - run: |
           sudo mkdir -p /home/nillerusr
-          # Перенаправляем запрос старого NDK r10e на скачанный современный r21e
           sudo ln -s /opt/android-ndk-r21e /home/nillerusr/android-ndk-r10e
-
-      - name: Make build.sh Executable
-        run: chmod +x build.sh
-
-      - name: Compile Libraries
-        run: ./build.sh
-
-      - name: Upload Ready .so Files
-        uses: actions/upload-artifact@v4 # Исправлено на v4
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake make
+      - run: |
+          sed -i 's|/data/data/com.termux/files/usr/opt/android-ndk|/opt/android-ndk-r21e|g' build.sh
+          sed -i 's|/data/data/com.termux/files/usr/bin/make|make|g' build.sh
+          sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
+          chmod +x build.sh
+          ./build.sh
+      - uses: actions/upload-artifact@v4
         with:
-          name: SourceEngine-Libraries
-          # Ищем готовые файлы по всем стандартным путям вывода
+          name: lib-files
           path: |
-            **/lib/android/armeabi-v7a/*.so
-            **/lib/android/arm64-v8a/*.so
-            **/libs/armeabi-v7a/*.so
-            **/libs/arm64-v8a/*.so
-            **/obj/local/armeabi-v7a/*.so
-            **/obj/local/arm64-v8a/*.so
+            **/armeabi-v7a/*.so
+            **/arm64-v8a/*.so
