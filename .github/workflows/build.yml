@@ -7,11 +7,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Перешли на новейший сервер, чтобы не было очередей
+    runs-on: ubuntu-latest # Используем новейший свободный сервер
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # Исправлено на v4
 
       - name: Download and Setup NDK r21e
         run: |
@@ -33,7 +33,7 @@ jobs:
         run: ./build.sh
 
       - name: Upload Ready .so Files
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4 # Исправлено на v4
         with:
           name: SourceEngine-Libraries
           # Ищем готовые файлы по всем стандартным путям вывода
