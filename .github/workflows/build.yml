@@ -1,4 +1,3 @@
-
 name: Build
 on:
   push:
@@ -19,34 +18,26 @@ jobs:
 
       - name: Build Libraries
         run: |
-          # Исправление путей
           sed -i "s|/data/data/com.termux/files/usr/opt/android-ndk|$PWD/android-ndk-r10e|g" build.sh
           sed -i 's|/data/data/com.termux/files/usr/bin/make|make|g' build.sh
           sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
           chmod +x build.sh
           
-          # Сборка 32-бит
-          echo "Building 32-bit..."
+          # Сборка
           APP_ABI=armeabi-v7a ./build.sh
-          mkdir -p dist/armeabi-v7a
-          find . -name "html_chromium.so" -exec cp {} dist/armeabi-v7a/ \;
-          
-          # Очистка перед 64-бит
-          make clean || true
-          
-          # Сборка 64-бит
-          echo "Building 64-bit..."
           APP_ABI=arm64-v8a ./build.sh
-          mkdir -p dist/arm64-v8a
-          find . -name "html_chromium.so" -exec cp {} dist/arm64-v8a/ \;
 
-      - name: Debug Output
+      - name: DIAGNOSTIC - Find all files
         run: |
-          echo "Файлы для загрузки:"
-          find dist -name "*.so"
-
+          echo "--- ГДЕ ЛЕЖАТ ФАЙЛЫ .SO? ---"
+          find . -name "*.so"
+          echo "--- ПОЛНОЕ ДЕРЕВО ПАПОК ---"
+          ls -R
+          
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: html_chromium
-          path: dist/
+          name: debug-artifacts
+          path: |
+            **/html_chromium.so
+            **/*.so
