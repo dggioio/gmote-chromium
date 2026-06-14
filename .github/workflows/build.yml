@@ -8,25 +8,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          wget -q https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip
-          unzip -q android-ndk-r21e-linux-x86_64.zip -d /opt/
-          echo "NDK_ROOT=/opt/android-ndk-r21e" >> $GITHUB_ENV
-      - run: |
+      - name: Setup NDK r10e
+        run: |
+          # Скачивание и установка NDK r10e
+          wget -q https://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
+          chmod +x android-ndk-r10e-linux-x86_64.bin
+          ./android-ndk-r10e-linux-x86_64.bin > /dev/null
+          sudo mv android-ndk-r10e /opt/
+          echo "NDK_ROOT=/opt/android-ndk-r10e" >> $GITHUB_ENV
+      - name: Configure Environment
+        run: |
+          # Создание необходимых путей для совместимости
           sudo mkdir -p /home/nillerusr
-          sudo ln -s /opt/android-ndk-r21e /home/nillerusr/android-ndk-r10e
-      - run: |
+          sudo ln -s /opt/android-ndk-r10e /home/nillerusr/android-ndk-r10e
           sudo apt-get update
           sudo apt-get install -y cmake make
-      - run: |
-          sed -i 's|/data/data/com.termux/files/usr/opt/android-ndk|/opt/android-ndk-r21e|g' build.sh
+      - name: Build
+        run: |
+          # Замена путей Termux на пути среды сборки
+          sed -i 's|/data/data/com.termux/files/usr/opt/android-ndk|/opt/android-ndk-r10e|g' build.sh
           sed -i 's|/data/data/com.termux/files/usr/bin/make|make|g' build.sh
           sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
           chmod +x build.sh
           ./build.sh
-      - uses: actions/upload-artifact@v4
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: lib-files
           path: |
-            **/armeabi-v7a/*.so
-            **/arm64-v8a/*.so
+            **/libs/**/*.so
+            **/obj/**/*.so
