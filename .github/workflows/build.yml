@@ -1,3 +1,4 @@
+
 name: Build
 on:
   push:
@@ -23,20 +24,16 @@ jobs:
           sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
           chmod +x build.sh
           
-          # Собираем и сразу перемещаем результат в понятные папки
-          mkdir -p output/armeabi-v7a output/arm64-v8a
-          
+          # Сборка 32-бит
           APP_ABI=armeabi-v7a ./build.sh
-          find . -name "html_chromium.so" -exec cp {} output/armeabi-v7a/ \;
-          
-          # Очистка перед следующей сборкой (если нужно)
-          make clean || true
-          
+          # Сборка 64-бит
           APP_ABI=arm64-v8a ./build.sh
-          find . -name "html_chromium.so" -exec cp {} output/arm64-v8a/ \;
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: html_chromium_libs
-          path: output/
+          # Эта маска найдет все файлы с таким именем в проекте,
+          # где бы они ни лежали после сборки
+          path: |
+            **/html_chromium.so
