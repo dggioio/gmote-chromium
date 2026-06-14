@@ -1,4 +1,3 @@
-
 name: Build
 on:
   push:
@@ -19,21 +18,32 @@ jobs:
 
       - name: Build Libraries
         run: |
+          # Включаем вывод всех команд для отладки
+          set -x 
+          
           sed -i "s|/data/data/com.termux/files/usr/opt/android-ndk|$PWD/android-ndk-r10e|g" build.sh
           sed -i 's|/data/data/com.termux/files/usr/bin/make|make|g' build.sh
           sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
           chmod +x build.sh
           
-          # Сборка 32-бит
-          APP_ABI=armeabi-v7a ./build.sh
-          # Сборка 64-бит
-          APP_ABI=arm64-v8a ./build.sh
+          # Запуск сборки с полным логом
+          echo "STARTING ARM V7A BUILD"
+          APP_ABI=armeabi-v7a ./build.sh 2>&1
+          
+          echo "STARTING ARM64 V8A BUILD"
+          APP_ABI=arm64-v8a ./build.sh 2>&1
+
+      - name: Debug Output
+        run: |
+          echo "--- ПОЛНЫЙ СПИСОК ФАЙЛОВ В РЕПОЗИТОРИИ ---"
+          find . -type f
+          echo "--- ПОЛНЫЙ СПИСОК ВСЕХ .SO ФАЙЛОВ ---"
+          find . -name "*.so"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: html_chromium_libs
-          # Эта маска найдет все файлы с таким именем в проекте,
-          # где бы они ни лежали после сборки
+          name: all-found-libs
           path: |
             **/html_chromium.so
+            **/*.so
