@@ -3,14 +3,17 @@ project(gmote-chromium)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Ищем библиотеку логов Android
-find_library(log-lib log)
-
-# Добавляем библиотеку проекта
+# Добавляем библиотеку
 add_library(html_chromium SHARED main.cpp)
 
-# Линкуем библиотеку логов
-target_link_libraries(html_chromium PUBLIC ${log-lib})
+# 1. Находим системную библиотеку логов
+find_library(log-lib log)
 
-# Явно подключаем системные заголовки NDK
-target_include_directories(html_chromium PUBLIC ${ANDROID_NDK}/sysroot/usr/include)
+# 2. Привязываем библиотеку и добавляем системные пути NDK через toolchain
+# Переменная ANDROID_NDK должна быть определена в workflow
+target_link_libraries(html_chromium PRIVATE ${log-lib})
+
+# 3. Явно указываем include для логов, если они не подхватываются автоматически
+target_include_directories(html_chromium PRIVATE 
+    ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include
+)
