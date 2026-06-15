@@ -8,20 +8,56 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup NDK r10e
-        run: |
-          wget -q https://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
-          chmod +x android-ndk-r10e-linux-x86_64.bin
-          ./android-ndk-r10e-linux-x86_64.bin -y > /dev/null
-          echo "NDK_ROOT=$PWD/android-ndk-r10e" >> $GITHUB_ENV
 
-      - name: Build Libraries
-        run: |
-          sed -i "s|/data/data/com.termux/files/usr/opt/android-ndk|$PWD/android-ndk-r10e|g" build.sh
-          sed -i 's|/data/data/com.termux/files/usr/bin/make|make|g' build.sh
-          sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
-          chmod +x build.sh
-          
-          # Запускаем сборку так, чтобы увидеть каждую ошибку компилятора
-          APP_ABI=armeabi-v7a ./build.sh
+          - name: Setup NDK r10e
+            run: |
+              wget -q https://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
+              chmod +x android-ndk-r10e-linux-x86_64.bin
+              ./android-ndk-r10e-linux-x86_64.bin -y > /dev/null
+              echo "NDK_ROOT=$PWD/android-ndk-r10e" >> $GITHUB_ENV
+              echo "$PWD/android-ndk-r10e" >> $GITHUB_PATH
+
+          - name: Patch and Build
+            run: |
+              sed -i 's|/data/data/com.termux/files/usr/bin/bash|/bin/bash|g' build.sh
+              sed -i 's|/data/data/com.termux/files/usr/bin/sh|/bin/sh|g' build.sh
+              sed -i "s|/data/data/com.termux/files/usr/opt/android-ndk|$PWD/android-ndk-r10e|g" build.sh
+              sed -i 's|/data/data/com.termux/files/usr/bin/make|make|g' build.sh
+              sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
+              chmod +x build.sh
+
+              mkdir -p output/armeabi-v7a
+              mkdir -p output/arm64-v8a
+
+              export ANDROID_NDK_ROOT=$PWD/android-ndk-r10e
+              export PATH=$ANDROID_NDK_ROOT:$PATH
+
+              mkdir -p jni
+              echo "APP_ABI := armeabi-v7a" > jni/Application.mk
+              echo "APP_STL := gnustl_static" >> jni/Application.mk
+              echo "APP_CPPFLAGS := -frtti -fexceptions -std=c++11" >> jni/Application.mk
+              echo "APP_PLATFORM := android-21" >> jni/Application.mk
+
+              APP_ABI=armeabi-v7a ./build.sh
+              find . -name "*html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} output/armeabi-v7a/libhtml_chromium.so \;
+
+              make clean || true
+              rm -rf libs obj || true
+
+              echo "APP_ABI := arm64-v8a" > jni/Application.mk
+              echo "APP_STL := gnustl_static" >> jni/Application.mk
+              echo "APP_CPPFLAGS := -frtti -fexceptions -std=c++11" >> jni/Application.mk
+              echo "APP_PLATFORM := android-21" >> jni/Application.mk
+
+              APP_ABI=arm64-v8a ./build.sh
+              find . -name "*html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} output/arm64-v8a/libhtml_chromium.so \;
+
+          - name: Verify Content
+            run: |
+              ls -R output/
+
+          - name: Upload Artifacts
+            uses: actions/upload-artifact@v4
+            with:
+              name: html_chromium
+              path: output/
