@@ -26,36 +26,29 @@ jobs:
           sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
           chmod +x build.sh
           
+          if [ -f jni/Application.mk ]; then
+            sed -i '/APP_ABI/d' jni/Application.mk
+            echo "APP_ABI := armeabi-v7a arm64-v8a" >> jni/Application.mk
+          else
+            mkdir -p jni
+            echo "APP_ABI := armeabi-v7a arm64-v8a" > jni/Application.mk
+            echo "APP_STL := gnustl_static" >> jni/Application.mk
+            echo "APP_PLATFORM := android-21" >> jni/Application.mk
+          fi
+          
+          find . -name "Application.mk" -not -path "*/android-ndk-r10e/*" -not -path "./jni/Application.mk" -exec sed -i '/APP_ABI/d' {} \;
+          find . -name "Application.mk" -not -path "*/android-ndk-r10e/*" -not -path "./jni/Application.mk" -exec bash -c 'echo "APP_ABI := armeabi-v7a arm64-v8a" >> "{}"' \;
+          
           mkdir -p output/armeabi-v7a
           mkdir -p output/arm64-v8a
           
           export ANDROID_NDK_ROOT=$PWD/android-ndk-r10e
           export PATH=$ANDROID_NDK_ROOT:$PATH
           
-          for mk in $(find . -name "Android.mk" -not -path "*/android-ndk-r10e/*"); do
-            dir=$(dirname "$mk")
-            echo "APP_ABI := armeabi-v7a" > "$dir/Application.mk"
-            echo "APP_STL := gnustl_static" >> "$dir/Application.mk"
-            echo "APP_CPPFLAGS := -frtti -fexceptions -std=c++11" >> "$dir/Application.mk"
-            echo "APP_PLATFORM := android-21" >> "$dir/Application.mk"
-          done
+          ./build.sh
           
-          APP_ABI=armeabi-v7a ./build.sh
-          find . -name "*html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} output/armeabi-v7a/libhtml_chromium.so \;
-          
-          make clean || true
-          rm -rf libs obj build || true
-          
-          for mk in $(find . -name "Android.mk" -not -path "*/android-ndk-r10e/*"); do
-            dir=$(dirname "$mk")
-            echo "APP_ABI := arm64-v8a" > "$dir/Application.mk"
-            echo "APP_STL := gnustl_static" >> "$dir/Application.mk"
-            echo "APP_CPPFLAGS := -frtti -fexceptions -std=c++11" >> "$dir/Application.mk"
-            echo "APP_PLATFORM := android-21" >> "$dir/Application.mk"
-          done
-          
-          APP_ABI=arm64-v8a ./build.sh
-          find . -name "*html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} output/arm64-v8a/libhtml_chromium.so \;
+          find . -path "*/armeabi-v7a/*" -name "*html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} output/armeabi-v7a/libhtml_chromium.so \;
+          find . -path "*/arm64-v8a/*" -name "*html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} output/arm64-v8a/libhtml_chromium.so \;
 
       - name: Verify Content
         run: |
