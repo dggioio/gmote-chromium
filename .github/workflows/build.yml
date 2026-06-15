@@ -23,21 +23,23 @@ jobs:
           sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
           chmod +x build.sh
           
-          # Сборка
-          APP_ABI=armeabi-v7a ./build.sh
-          APP_ABI=arm64-v8a ./build.sh
-
-      - name: DIAGNOSTIC - Find all files
-        run: |
-          echo "--- ГДЕ ЛЕЖАТ ФАЙЛЫ .SO? ---"
-          find . -name "*.so"
-          echo "--- ПОЛНОЕ ДЕРЕВО ПАПОК ---"
-          ls -R
+          mkdir -p separate_artifacts/armeabi-v7a
+          mkdir -p separate_artifacts/arm64-v8a
           
+          APP_ABI=armeabi-v7a ./build.sh
+          find . -maxdepth 4 -name "html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} separate_artifacts/armeabi-v7a/ \;
+          
+          make clean || true
+          
+          APP_ABI=arm64-v8a ./build.sh
+          find . -maxdepth 4 -name "html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} separate_artifacts/arm64-v8a/ \;
+
+      - name: Verify Results
+        run: |
+          ls -R separate_artifacts/
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: debug-artifacts
-          path: |
-            **/html_chromium.so
-            **/*.so
+          name: html_chromium_final
+          path: separate_artifacts/
