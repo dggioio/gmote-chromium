@@ -1,61 +1,56 @@
-name: Build
+name: Build libhtml_chromium
+
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup NDK r10e
-        run: |
-          wget -q https://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin
-          chmod +x android-ndk-r10e-linux-x86_64.bin
-          ./android-ndk-r10e-linux-x86_64.bin -y > /dev/null
-          echo "NDK_ROOT=$PWD/android-ndk-r10e" >> $GITHUB_ENV
-          echo "$PWD/android-ndk-r10e" >> $GITHUB_PATH
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Patch and Build
-        run: |
-          sed -i 's|/data/data/com.termux/files/usr/bin/bash|/bin/bash|g' build.sh
-          sed -i 's|/data/data/com.termux/files/usr/bin/sh|/bin/sh|g' build.sh
-          sed -i "s|/data/data/com.termux/files/usr/opt/android-ndk|$PWD/android-ndk-r10e|g" build.sh
-          sed -i 's|/data/data/com.termux/files/usr/bin/make|make|g' build.sh
-          sed -i 's|/data/data/com.termux/files/usr/bin/cmake|cmake|g' build.sh
-          chmod +x build.sh
-          
-          if [ -f jni/Application.mk ]; then
-            sed -i '/APP_ABI/d' jni/Application.mk
-            echo "APP_ABI := armeabi-v7a arm64-v8a" >> jni/Application.mk
-          else
-            mkdir -p jni
-            echo "APP_ABI := armeabi-v7a arm64-v8a" > jni/Application.mk
-            echo "APP_STL := gnustl_static" >> jni/Application.mk
-            echo "APP_PLATFORM := android-21" >> jni/Application.mk
-          fi
-          
-          find . -name "Application.mk" -not -path "*/android-ndk-r10e/*" -not -path "./jni/Application.mk" -exec sed -i '/APP_ABI/d' {} \;
-          find . -name "Application.mk" -not -path "*/android-ndk-r10e/*" -not -path "./jni/Application.mk" -exec bash -c 'echo "APP_ABI := armeabi-v7a arm64-v8a" >> "{}"' \;
-          
-          mkdir -p output/armeabi-v7a
-          mkdir -p output/arm64-v8a
-          
-          export ANDROID_NDK_ROOT=$PWD/android-ndk-r10e
-          export PATH=$ANDROID_NDK_ROOT:$PATH
-          
-          ./build.sh
-          
-          find . -path "*/armeabi-v7a/*" -name "*html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} output/armeabi-v7a/libhtml_chromium.so \;
-          find . -path "*/arm64-v8a/*" -name "*html_chromium.so" -not -path "*/android-ndk-r10e/*" -exec cp {} output/arm64-v8a/libhtml_chromium.so \;
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r25c
+          add-to-path: true
 
-      - name: Verify Content
+      - name: Build ARM32 (armeabi-v7a)
         run: |
-          ls -R output/
+          mkdir -p build_arm32
+          cd build_arm32
+          cmake .. \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=armeabi-v7a \
+            -DANDROID_PLATFORM=android-21 \
+            -DANDROID_STL=c++_shared \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --parallel
 
-      - name: Upload Artifacts
+      - name: Build ARM64 (arm64-v8a)
+        run: |
+          mkdir -p build_arm64
+          cd build_arm64
+          cmake .. \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-21 \
+            -DANDROID_STL=c++_shared \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --parallel
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p output
+          cp build_arm32/libhtml_chromium.so output/libhtml_chromium_32.so
+          cp build_arm64/libhtml_chromium.so output/libhtml_chromium_64.so
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: html_chromium
+          name: libhtml_chromium
           path: output/
